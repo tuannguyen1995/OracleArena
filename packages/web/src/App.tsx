@@ -281,15 +281,40 @@ function App() {
 
                 {/* Trading Controls */}
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '24px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                     <span style={{ fontWeight: '600' }}>Place Prediction</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Amount (USDC):</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Amount:</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {[50, 100, 500].map(amount => (
+                          <button 
+                            key={amount}
+                            onClick={() => setBetAmount(amount)}
+                            style={{ 
+                              background: betAmount === amount ? 'var(--primary-color)' : 'rgba(255,255,255,0.05)', 
+                              border: '1px solid var(--surface-border)', 
+                              color: 'white', 
+                              padding: '4px 8px', 
+                              borderRadius: '4px', 
+                              cursor: 'pointer',
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            ${amount}
+                          </button>
+                        ))}
+                        <button 
+                          onClick={() => setBetAmount(balance)}
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--surface-border)', color: 'var(--warning)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                        >
+                          MAX
+                        </button>
+                      </div>
                       <input 
                         type="number" 
                         value={betAmount} 
                         onChange={(e) => setBetAmount(Number(e.target.value))}
-                        style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--surface-border)', color: 'white', fontWeight: 'bold' }}
+                        style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--surface-border)', color: 'white', fontWeight: 'bold', marginLeft: '4px' }}
                       />
                     </div>
                   </div>
