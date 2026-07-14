@@ -166,10 +166,29 @@ function App() {
             <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={16}/> Markets</a>
             <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}><Cpu size={16}/> Agents</a>
             {loggedIn ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-color)', padding: '6px 16px', borderRadius: '20px', border: '1px solid var(--surface-border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--surface-border)' }}>
                 <Wallet size={16} color="var(--primary-color)" />
-                <span style={{ fontWeight: '600', fontFamily: 'monospace', fontSize: '1.05rem' }}>{balance.toLocaleString()} USDC</span>
+                <span style={{ fontWeight: '600' }}>{balance.toLocaleString()} USDC</span>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                <div style={{ width: '8px', height: '8px', background: 'var(--success)', borderRadius: '50%', boxShadow: '0 0 10px var(--success)' }} />
+                <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>{nametag}</span>
+              </div>
+              <button 
+                onClick={() => {
+                  setLoggedIn(false);
+                  setNametag('');
+                  localStorage.removeItem('oracle_loggedIn');
+                  localStorage.removeItem('oracle_nametag');
+                }}
+                style={{ background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--danger)'; }}
+              >
+                Disconnect
+              </button>
+            </div>
             ) : (
               <button className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem' }} onClick={() => document.getElementById('login-input')?.focus()}>
                 Connect Wallet
