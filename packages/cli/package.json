@@ -1,0 +1,21 @@
+{
+  "name": "@oracle-arena/cli",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "oracle-agent": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@oracle-arena/core": "1.0.0",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.1",
+    "@types/node": "^18.15.0"
+  }
+}
