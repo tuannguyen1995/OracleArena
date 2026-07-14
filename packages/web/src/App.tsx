@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wallet, Activity, TrendingUp, Cpu, ChevronRight, ShieldCheck, 
   Zap, ArrowUpRight, BarChart3, Clock, CheckCircle2, Globe, GitBranch,
-  MessageSquare
+  MessageSquare, Trophy, Droplet, Medal, Star
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,14 @@ const MARKETS = [
   { id: 1, title: "Will Ethereum (ETH) hit $4,000 by Friday?", pool: 15420, oddsYes: 68, status: 'LIVE', category: 'Crypto' },
   { id: 2, title: "Will GPT-5 be announced before Q4 2026?", pool: 8950, oddsYes: 42, status: 'LIVE', category: 'AI' },
   { id: 3, title: "US Federal Reserve to cut rates in September?", pool: 24100, oddsYes: 81, status: 'LIVE', category: 'Finance' }
+];
+
+const MOCK_LEADERBOARD = [
+  { agent: 'NexusAI', pnl: '+42,500 USDC', winRate: '82%', rank: 1 },
+  { agent: 'AlphaOracle', pnl: '+38,100 USDC', winRate: '79%', rank: 2 },
+  { agent: 'DataSwarm', pnl: '+24,300 USDC', winRate: '75%', rank: 3 },
+  { agent: 'MarketSentinel', pnl: '+18,900 USDC', winRate: '68%', rank: 4 },
+  { agent: 'CryptoMind', pnl: '+12,400 USDC', winRate: '65%', rank: 5 },
 ];
 
 interface AgentLog {
@@ -47,6 +55,8 @@ function App() {
   const [isBetting, setIsBetting] = useState<'YES' | 'NO' | null>(null);
   const [betAmount, setBetAmount] = useState(100);
   const [showHistory, setShowHistory] = useState(false);
+  const [rightTab, setRightTab] = useState<'FEED' | 'LEADERBOARD'>('FEED');
+  const [isMinting, setIsMinting] = useState(false);
   const [userBets, setUserBets] = useState<UserBet[]>(() => {
     try {
       const saved = localStorage.getItem('oracle_userBets');
@@ -177,6 +187,16 @@ function App() {
     }, 1200);
   };
 
+  const handleMint = () => {
+    setIsMinting(true);
+    const loadingToast = toast.loading('Minting Unicity Testnet USDC...');
+    setTimeout(() => {
+      setBalance(prev => prev + 1000);
+      toast.success('Successfully minted 1,000 USDC!', { id: loadingToast });
+      setIsMinting(false);
+    }, 2000);
+  };
+
   return (
     <>
       <Toaster position="bottom-right" toastOptions={{
@@ -197,6 +217,10 @@ function App() {
             <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}><Cpu size={16}/> Agents</a>
             {loggedIn ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button onClick={handleMint} disabled={isMinting} className="btn" style={{ background: 'rgba(99, 102, 241, 0.15)', color: 'var(--primary-color)', padding: '8px 16px', fontSize: '0.9rem', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+                  {isMinting ? <span className="loader animate-spin" style={{ width: 14, height: 14, borderWidth: 2, borderColor: 'var(--primary-color)', borderTopColor: 'transparent' }} /> : <Droplet size={16} />} 
+                  Faucet
+                </button>
                 <button onClick={() => setShowHistory(true)} className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)', padding: '8px 16px', fontSize: '0.9rem' }}>
                   <Clock size={16} /> History
                 </button>
@@ -404,48 +428,77 @@ function App() {
               </motion.section>
             </div>
 
-            {/* Right Column: Agent Activity Feed */}
+            {/* Right Column: Agent Activity Feed & Leaderboard */}
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
               <section className="glass-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--surface-border)' }}>
-                  <Cpu size={20} color="var(--primary-color)" />
-                  <h3 style={{ fontSize: '1.2rem' }}>Live Agent Feed</h3>
+                  <button onClick={() => setRightTab('FEED')} style={{ background: 'none', border: 'none', color: rightTab === 'FEED' ? 'var(--primary-color)' : 'var(--text-muted)', fontSize: '1.1rem', fontWeight: rightTab === 'FEED' ? 'bold' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Cpu size={18} /> Live Feed
+                  </button>
+                  <button onClick={() => setRightTab('LEADERBOARD')} style={{ background: 'none', border: 'none', color: rightTab === 'LEADERBOARD' ? 'var(--primary-color)' : 'var(--text-muted)', fontSize: '1.1rem', fontWeight: rightTab === 'LEADERBOARD' ? 'bold' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Trophy size={18} /> Top Agents
+                  </button>
                   <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--success)' }}>
                     <span className="animate-spin" style={{ width: '8px', height: '8px', borderRadius: '50%', border: '2px solid transparent', borderTopColor: 'var(--success)', borderRightColor: 'var(--success)' }}></span>
-                    Syncing Unicity
+                    Unicity
                   </div>
                 </div>
 
                 <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', maxHeight: '500px', paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <AnimatePresence initial={false}>
-                    {agentLogs.length === 0 ? (
-                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', fontSize: '0.9rem' }}>
-                        Waiting for agent activity...
-                      </div>
-                    ) : (
-                      agentLogs.map((log) => (
-                        <motion.div 
-                          key={log.id}
-                          initial={{ opacity: 0, x: 20, height: 0 }}
-                          animate={{ opacity: 1, x: 0, height: 'auto' }}
-                          className="agent-log-item"
-                          style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', borderLeft: `3px solid ${log.side === 'YES' ? 'var(--success)' : 'var(--danger)'}` }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '4px' }}><Zap size={12}/> {log.agent}</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{log.time.toLocaleTimeString()}</span>
-                          </div>
-                          <div style={{ fontSize: '0.9rem', lineHeight: 1.4 }}>
-                            Predicted <strong style={{ color: log.side === 'YES' ? 'var(--success)' : 'var(--danger)' }}>{log.side}</strong> with <strong>${log.amount}</strong>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              on: {MARKETS.find(m => m.id === log.marketId)?.title}
+                  {rightTab === 'FEED' ? (
+                    <AnimatePresence initial={false}>
+                      {agentLogs.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', fontSize: '0.9rem' }}>
+                          Waiting for agent activity...
+                        </div>
+                      ) : (
+                        agentLogs.map((log) => (
+                          <motion.div 
+                            key={log.id}
+                            initial={{ opacity: 0, x: 20, height: 0 }}
+                            animate={{ opacity: 1, x: 0, height: 'auto' }}
+                            className="agent-log-item"
+                            style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', borderLeft: `3px solid ${log.side === 'YES' ? 'var(--success)' : 'var(--danger)'}` }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '4px' }}><Zap size={12}/> {log.agent}</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{log.time.toLocaleTimeString()}</span>
                             </div>
+                            <div style={{ fontSize: '0.9rem', lineHeight: 1.4 }}>
+                              Predicted <strong style={{ color: log.side === 'YES' ? 'var(--success)' : 'var(--danger)' }}>{log.side}</strong> with <strong>${log.amount}</strong>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                on: {MARKETS.find(m => m.id === log.marketId)?.title}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))
+                      )}
+                      <div ref={logsEndRef} />
+                    </AnimatePresence>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {MOCK_LEADERBOARD.map(agent => (
+                        <div key={agent.agent} style={{ background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '8px', borderLeft: `3px solid ${agent.rank === 1 ? 'gold' : agent.rank === 2 ? 'silver' : agent.rank === 3 ? '#cd7f32' : 'var(--surface-border)'}` }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: agent.rank === 1 ? 'gold' : agent.rank === 2 ? 'silver' : agent.rank === 3 ? '#cd7f32' : 'var(--text-muted)' }}>#{agent.rank}</span>
+                              <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {agent.rank === 1 && <Star size={14} color="gold" />} {agent.agent}
+                              </span>
+                            </div>
+                            <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{agent.pnl}</span>
                           </div>
-                        </motion.div>
-                      ))
-                    )}
-                    <div ref={logsEndRef} />
-                  </AnimatePresence>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            <span>Win Rate</span>
+                            <span style={{ color: 'white', fontWeight: 'bold' }}>{agent.winRate}</span>
+                          </div>
+                          <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '6px' }}>
+                            <div style={{ width: agent.winRate, height: '100%', background: 'var(--primary-color)', borderRadius: '2px' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </section>
             </motion.div>
