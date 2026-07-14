@@ -432,13 +432,13 @@ function App() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }} style={{ height: '650px' }}>
               <section className="glass-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--surface-border)' }}>
-                  <button onClick={() => setRightTab('FEED')} style={{ background: 'none', border: 'none', color: rightTab === 'FEED' ? 'var(--primary-color)' : 'var(--text-muted)', fontSize: '1.1rem', fontWeight: rightTab === 'FEED' ? 'bold' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button onClick={() => setRightTab('FEED')} style={{ background: 'none', border: 'none', color: rightTab === 'FEED' ? 'var(--primary-color)' : 'var(--text-muted)', fontSize: '1.1rem', fontWeight: rightTab === 'FEED' ? 'bold' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                     <Cpu size={18} /> Live Feed
                   </button>
-                  <button onClick={() => setRightTab('LEADERBOARD')} style={{ background: 'none', border: 'none', color: rightTab === 'LEADERBOARD' ? 'var(--primary-color)' : 'var(--text-muted)', fontSize: '1.1rem', fontWeight: rightTab === 'LEADERBOARD' ? 'bold' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button onClick={() => setRightTab('LEADERBOARD')} style={{ background: 'none', border: 'none', color: rightTab === 'LEADERBOARD' ? 'var(--primary-color)' : 'var(--text-muted)', fontSize: '1.1rem', fontWeight: rightTab === 'LEADERBOARD' ? 'bold' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                     <Trophy size={18} /> Top Agents
                   </button>
-                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--success)' }}>
+                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--success)', whiteSpace: 'nowrap' }}>
                     <span className="animate-spin" style={{ width: '8px', height: '8px', borderRadius: '50%', border: '2px solid transparent', borderTopColor: 'var(--success)', borderRightColor: 'var(--success)' }}></span>
                     Unicity
                   </div>
@@ -482,11 +482,11 @@ function App() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: agent.rank === 1 ? 'gold' : agent.rank === 2 ? 'silver' : agent.rank === 3 ? '#cd7f32' : 'var(--text-muted)' }}>#{agent.rank}</span>
-                              <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                                 {agent.rank === 1 && <Star size={14} color="gold" />} {agent.agent}
                               </span>
                             </div>
-                            <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{agent.pnl}</span>
+                            <span style={{ color: 'var(--success)', fontWeight: 'bold', whiteSpace: 'nowrap', marginLeft: '8px' }}>{agent.pnl}</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                             <span>Win Rate</span>
