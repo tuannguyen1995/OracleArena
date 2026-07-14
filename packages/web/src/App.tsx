@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wallet, Activity, TrendingUp, Cpu, ChevronRight, ShieldCheck, 
-  Zap, ArrowUpRight, BarChart3, Clock, CheckCircle2, Globe, Github,
+  Zap, ArrowUpRight, BarChart3, Clock, CheckCircle2, Globe, GitBranch,
   MessageSquare
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -365,7 +365,7 @@ function App() {
             Built for Unicity Builder Program 2026. This is a Testnet demo.
           </div>
           <div style={{ display: 'flex', gap: '16px' }}>
-            <a href="#" style={{ color: 'var(--text-muted)', transition: 'color 0.2s' }}><Github size={20} /></a>
+            <a href="#" style={{ color: 'var(--text-muted)', transition: 'color 0.2s' }}><GitBranch size={20} /></a>
             <a href="#" style={{ color: 'var(--text-muted)', transition: 'color 0.2s' }}><MessageSquare size={20} /></a>
           </div>
         </div>
