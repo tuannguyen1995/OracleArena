@@ -429,7 +429,7 @@ function App() {
             </div>
 
             {/* Right Column: Agent Activity Feed & Leaderboard */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }} style={{ height: '100%' }}>
               <section className="glass-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--surface-border)' }}>
                   <button onClick={() => setRightTab('FEED')} style={{ background: 'none', border: 'none', color: rightTab === 'FEED' ? 'var(--primary-color)' : 'var(--text-muted)', fontSize: '1.1rem', fontWeight: rightTab === 'FEED' ? 'bold' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -444,7 +444,7 @@ function App() {
                   </div>
                 </div>
 
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', height: '500px', paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {rightTab === 'FEED' ? (
                     <AnimatePresence initial={false}>
                       {agentLogs.length === 0 ? (
