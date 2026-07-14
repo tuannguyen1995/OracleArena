@@ -444,7 +444,7 @@ function App() {
                   </div>
                 </div>
 
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', maxHeight: '500px', paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', height: '500px', paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {rightTab === 'FEED' ? (
                     <AnimatePresence initial={false}>
                       {agentLogs.length === 0 ? (
