@@ -27,8 +27,16 @@ interface AgentLog {
   side: 'YES' | 'NO';
 }
 
+interface UserBet {
+  id: string;
+  marketId: number;
+  side: 'YES' | 'NO';
+  amount: number;
+  time: string; // Stored as ISO string to prevent JSON parse crash
+  txHash: string;
+}
+
 function App() {
-  console.log("===== APP IS RUNNING v3 =====");
   const [nametag, setNametag] = useState(() => localStorage.getItem('oracle_nametag') || '');
   const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem('oracle_loggedIn') === 'true');
   const [balance, setBalance] = useState(() => {
@@ -38,6 +46,16 @@ function App() {
   const [activeMarket, setActiveMarket] = useState(MARKETS[0]);
   const [isBetting, setIsBetting] = useState<'YES' | 'NO' | null>(null);
   const [betAmount, setBetAmount] = useState(100);
+  const [showHistory, setShowHistory] = useState(false);
+  const [userBets, setUserBets] = useState<UserBet[]>(() => {
+    try {
+      const saved = localStorage.getItem('oracle_userBets');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  });
   
   // Real-time simulated state
   const [markets, setMarkets] = useState(MARKETS);
@@ -46,8 +64,8 @@ function App() {
 
   // Auto-scroll logs
   useEffect(() => {
-    if (logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (logsEndRef.current && logsEndRef.current.parentElement) {
+      logsEndRef.current.parentElement.scrollTop = logsEndRef.current.parentElement.scrollHeight;
     }
   }, [agentLogs]);
 
@@ -56,7 +74,8 @@ function App() {
     localStorage.setItem('oracle_nametag', nametag);
     localStorage.setItem('oracle_loggedIn', String(loggedIn));
     localStorage.setItem('oracle_balance', String(balance));
-  }, [nametag, loggedIn, balance]);
+    localStorage.setItem('oracle_userBets', JSON.stringify(userBets));
+  }, [nametag, loggedIn, balance, userBets]);
 
   // Simulate Live Agent Activity
   useEffect(() => {
@@ -134,6 +153,16 @@ function App() {
         oddsYes: side === 'YES' ? Math.min(99, prev.oddsYes + 1) : Math.max(1, prev.oddsYes - 1)
       }));
 
+      const newBet: UserBet = {
+        id: Math.random().toString(36).substring(7),
+        marketId: activeMarket.id,
+        side,
+        amount: betAmount,
+        time: new Date().toISOString(),
+        txHash: '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('')
+      };
+      setUserBets(prev => [newBet, ...prev]);
+
       setIsBetting(null);
       
       toast.custom((t) => (
@@ -150,9 +179,6 @@ function App() {
 
   return (
     <>
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', background: 'red', color: 'white', zIndex: 99999, padding: '20px', textAlign: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-        IF YOU CAN READ THIS, VERCEL DEPLOYMENT IS WORKING!
-      </div>
       <Toaster position="bottom-right" toastOptions={{
         style: { background: '#1e1e24', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }
       }} />
@@ -170,29 +196,32 @@ function App() {
             <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={16}/> Markets</a>
             <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}><Cpu size={16}/> Agents</a>
             {loggedIn ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--surface-border)' }}>
-                <Wallet size={16} color="var(--primary-color)" />
-                <span style={{ fontWeight: '600' }}>{balance.toLocaleString()} USDC</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button onClick={() => setShowHistory(true)} className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)', padding: '8px 16px', fontSize: '0.9rem' }}>
+                  <Clock size={16} /> History
+                </button>
+                <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--surface-border)' }}>
+                  <Wallet size={16} color="var(--primary-color)" />
+                  <span style={{ fontWeight: '600' }}>{balance.toLocaleString()} USDC</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                  <div style={{ width: '8px', height: '8px', background: 'var(--success)', borderRadius: '50%', boxShadow: '0 0 10px var(--success)' }} />
+                  <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>{nametag}</span>
+                </div>
+                <button 
+                  onClick={() => {
+                    setLoggedIn(false);
+                    setNametag('');
+                    localStorage.removeItem('oracle_loggedIn');
+                    localStorage.removeItem('oracle_nametag');
+                  }}
+                  style={{ background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', transition: 'all 0.2s' }}
+                  onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--danger)'; }}
+                >
+                  Disconnect
+                </button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                <div style={{ width: '8px', height: '8px', background: 'var(--success)', borderRadius: '50%', boxShadow: '0 0 10px var(--success)' }} />
-                <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>{nametag}</span>
-              </div>
-              <button 
-                onClick={() => {
-                  setLoggedIn(false);
-                  setNametag('');
-                  localStorage.removeItem('oracle_loggedIn');
-                  localStorage.removeItem('oracle_nametag');
-                }}
-                style={{ background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', transition: 'all 0.2s' }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--danger)'; }}
-              >
-                Disconnect
-              </button>
-            </div>
             ) : (
               <button className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem' }} onClick={() => document.getElementById('login-input')?.focus()}>
                 Connect Wallet
@@ -423,6 +452,46 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* History Modal */}
+      {showHistory && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel" style={{ width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', background: 'rgba(20, 20, 25, 0.95)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--surface-border)', paddingBottom: '16px' }}>
+              <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}><Clock /> Betting History</h2>
+              <button onClick={() => setShowHistory(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
+            </div>
+            
+            <div className="custom-scrollbar" style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {userBets.length === 0 ? (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>No bets placed yet.</p>
+              ) : (
+                userBets.map(bet => (
+                  <div key={bet.id} style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: `4px solid ${bet.side === 'YES' ? 'var(--success)' : 'var(--danger)'}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ fontWeight: 'bold' }}>{MARKETS.find(m => m.id === bet.marketId)?.title || 'Unknown Market'}</span>
+                      <span style={{ color: bet.side === 'YES' ? 'var(--success)' : 'var(--danger)', fontWeight: 'bold' }}>{bet.side}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>{bet.amount} USDC</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {new Date(bet.time).toLocaleString()}
+                        </div>
+                        {bet.txHash && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--primary-color)', marginTop: '4px', fontFamily: 'monospace', opacity: 0.7 }}>
+                            Tx: {bet.txHash.substring(0, 6)}...{bet.txHash.substring(bet.txHash.length - 4)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid var(--surface-border)', padding: '40px 24px', marginTop: 'auto' }}>
