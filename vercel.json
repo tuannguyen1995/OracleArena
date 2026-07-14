@@ -1,5 +1,0 @@
-{
-  "buildCommand": "npm run build --workspace=@oracle-arena/web && cp -r packages/web/dist dist",
-  "outputDirectory": "dist",
-  "installCommand": "npm install"
-}
