@@ -28,9 +28,12 @@ interface AgentLog {
 }
 
 function App() {
-  const [nametag, setNametag] = useState('');
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [balance, setBalance] = useState(INITIAL_BALANCE);
+  const [nametag, setNametag] = useState(() => localStorage.getItem('oracle_nametag') || '');
+  const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem('oracle_loggedIn') === 'true');
+  const [balance, setBalance] = useState(() => {
+    const saved = localStorage.getItem('oracle_balance');
+    return saved ? Number(saved) : INITIAL_BALANCE;
+  });
   const [activeMarket, setActiveMarket] = useState(MARKETS[0]);
   const [isBetting, setIsBetting] = useState<'YES' | 'NO' | null>(null);
   const [betAmount, setBetAmount] = useState(100);
@@ -46,6 +49,13 @@ function App() {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [agentLogs]);
+
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem('oracle_nametag', nametag);
+    localStorage.setItem('oracle_loggedIn', String(loggedIn));
+    localStorage.setItem('oracle_balance', String(balance));
+  }, [nametag, loggedIn, balance]);
 
   // Simulate Live Agent Activity
   useEffect(() => {
