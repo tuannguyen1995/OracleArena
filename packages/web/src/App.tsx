@@ -33,6 +33,7 @@ function App() {
   const [balance, setBalance] = useState(INITIAL_BALANCE);
   const [activeMarket, setActiveMarket] = useState(MARKETS[0]);
   const [isBetting, setIsBetting] = useState<'YES' | 'NO' | null>(null);
+  const [betAmount, setBetAmount] = useState(100);
   
   // Real-time simulated state
   const [markets, setMarkets] = useState(MARKETS);
@@ -95,7 +96,10 @@ function App() {
   };
 
   const handleBet = (side: 'YES' | 'NO') => {
-    const betAmount = 100;
+    if (betAmount <= 0) {
+      toast.error("Bet amount must be greater than 0!");
+      return;
+    }
     if (balance < betAmount) {
       toast.error("Insufficient balance!");
       return;
@@ -126,7 +130,7 @@ function App() {
           <CheckCircle2 color={side === 'YES' ? 'var(--success)' : 'var(--danger)'} size={24} />
           <div>
             <p style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>Bet Placed Successfully</p>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>-100 USDC on {side}</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>-{betAmount} USDC on {side}</p>
           </div>
         </div>
       ), { duration: 3000 });
@@ -279,26 +283,34 @@ function App() {
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '24px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <span style={{ fontWeight: '600' }}>Place Prediction</span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Cost: <span style={{color: 'white', fontWeight: 'bold'}}>100 USDC</span> / share</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Amount (USDC):</span>
+                      <input 
+                        type="number" 
+                        value={betAmount} 
+                        onChange={(e) => setBetAmount(Number(e.target.value))}
+                        style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--surface-border)', color: 'white', fontWeight: 'bold' }}
+                      />
+                    </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <button 
                       onClick={() => handleBet('YES')}
-                      disabled={isBetting !== null}
+                      disabled={isBetting !== null || betAmount <= 0}
                       className="btn btn-success" 
                       style={{ padding: '20px', fontSize: '1.2rem', display: 'flex', flexDirection: 'column', gap: '4px' }}
                     >
                       {isBetting === 'YES' ? <span className="loader animate-spin" /> : 'Buy YES'}
-                      <span style={{ fontSize: '0.8rem', opacity: 0.8, fontWeight: 'normal' }}>Payout: {(100 / activeMarket.oddsYes).toFixed(2)}x</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.8, fontWeight: 'normal' }}>Payout: {(betAmount / activeMarket.oddsYes * 100).toFixed(2)} USDC</span>
                     </button>
                     <button 
                       onClick={() => handleBet('NO')}
-                      disabled={isBetting !== null}
+                      disabled={isBetting !== null || betAmount <= 0}
                       className="btn btn-danger" 
                       style={{ padding: '20px', fontSize: '1.2rem', display: 'flex', flexDirection: 'column', gap: '4px' }}
                     >
                       {isBetting === 'NO' ? <span className="loader animate-spin" /> : 'Buy NO'}
-                      <span style={{ fontSize: '0.8rem', opacity: 0.8, fontWeight: 'normal' }}>Payout: {(100 / (100 - activeMarket.oddsYes)).toFixed(2)}x</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.8, fontWeight: 'normal' }}>Payout: {(betAmount / (100 - activeMarket.oddsYes) * 100).toFixed(2)} USDC</span>
                     </button>
                   </div>
                 </div>
