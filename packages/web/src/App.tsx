@@ -1,143 +1,376 @@
-import React, { useState } from 'react';
-import { Wallet, Activity, TrendingUp, Cpu, ChevronRight, ShieldCheck, Zap } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Wallet, Activity, TrendingUp, Cpu, ChevronRight, ShieldCheck, 
+  Zap, ArrowUpRight, BarChart3, Clock, CheckCircle2, Globe, Github,
+  MessageSquare
+} from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 import './index.css';
+
+// Mock Data
+const INITIAL_BALANCE = 10000;
+const AGENT_NAMES = ['AlphaOracle', 'CryptoMind', 'DataSwarm', 'MarketSentinel', 'NexusAI'];
+const MARKETS = [
+  { id: 1, title: "Will Ethereum (ETH) hit $4,000 by Friday?", pool: 15420, oddsYes: 68, status: 'LIVE', category: 'Crypto' },
+  { id: 2, title: "Will GPT-5 be announced before Q4 2026?", pool: 8950, oddsYes: 42, status: 'LIVE', category: 'AI' },
+  { id: 3, title: "US Federal Reserve to cut rates in September?", pool: 24100, oddsYes: 81, status: 'LIVE', category: 'Finance' }
+];
+
+interface AgentLog {
+  id: string;
+  agent: string;
+  action: string;
+  amount: number;
+  marketId: number;
+  time: Date;
+  side: 'YES' | 'NO';
+}
 
 function App() {
   const [nametag, setNametag] = useState('');
   const [loggedIn, setLoggedIn] = useState(false);
+  const [balance, setBalance] = useState(INITIAL_BALANCE);
+  const [activeMarket, setActiveMarket] = useState(MARKETS[0]);
+  const [isBetting, setIsBetting] = useState<'YES' | 'NO' | null>(null);
+  
+  // Real-time simulated state
+  const [markets, setMarkets] = useState(MARKETS);
+  const [agentLogs, setAgentLogs] = useState<AgentLog[]>([]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [agentLogs]);
+
+  // Simulate Live Agent Activity
+  useEffect(() => {
+    if (!loggedIn) return;
+
+    const interval = setInterval(() => {
+      // Randomly update pool size
+      setMarkets(prev => prev.map(m => {
+        if (Math.random() > 0.5) {
+          return { ...m, pool: m.pool + Math.floor(Math.random() * 500), oddsYes: Math.max(10, Math.min(90, m.oddsYes + (Math.random() > 0.5 ? 1 : -1))) };
+        }
+        return m;
+      }));
+
+      // Randomly push agent log
+      if (Math.random() > 0.4) {
+        const agent = AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)];
+        const market = MARKETS[Math.floor(Math.random() * MARKETS.length)];
+        const side = Math.random() > 0.5 ? 'YES' : 'NO';
+        const amount = Math.floor(Math.random() * 1000) + 50;
+        
+        const newLog: AgentLog = {
+          id: Math.random().toString(36).substr(2, 9),
+          agent,
+          action: 'staked',
+          amount,
+          marketId: market.id,
+          time: new Date(),
+          side
+        };
+
+        setAgentLogs(prev => [...prev.slice(-15), newLog]); // Keep last 15
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [loggedIn]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (nametag.trim()) {
-      setLoggedIn(true);
+      const loadingToast = toast.loading('Connecting wallet securely...');
+      setTimeout(() => {
+        toast.success(`Welcome back, ${nametag}!`, { id: loadingToast });
+        setLoggedIn(true);
+      }, 1000);
     }
   };
 
-  return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
-      <header className="animate-fade-in" style={{ textAlign: 'center', marginBottom: '50px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '16px' }}>
-          <Activity size={36} color="var(--primary-color)" />
-          <h1 style={{ fontSize: '3rem', fontWeight: '700', letterSpacing: '-1px' }}>
-            Oracle<span className="text-gradient">Arena</span>
-          </h1>
+  const handleBet = (side: 'YES' | 'NO') => {
+    const betAmount = 100;
+    if (balance < betAmount) {
+      toast.error("Insufficient balance!");
+      return;
+    }
+
+    setIsBetting(side);
+    
+    setTimeout(() => {
+      setBalance(prev => prev - betAmount);
+      
+      // Update pool visually
+      setMarkets(prev => prev.map(m => 
+        m.id === activeMarket.id 
+          ? { ...m, pool: m.pool + betAmount, oddsYes: side === 'YES' ? Math.min(99, m.oddsYes + 1) : Math.max(1, m.oddsYes - 1) } 
+          : m
+      ));
+      
+      setActiveMarket(prev => ({ 
+        ...prev, 
+        pool: prev.pool + betAmount,
+        oddsYes: side === 'YES' ? Math.min(99, prev.oddsYes + 1) : Math.max(1, prev.oddsYes - 1)
+      }));
+
+      setIsBetting(null);
+      
+      toast.custom((t) => (
+        <div className={`${t.visible ? 'animate-fade-in' : ''} glass-panel`} style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(20, 20, 25, 0.95)', border: `1px solid ${side === 'YES' ? 'var(--success)' : 'var(--danger)'}` }}>
+          <CheckCircle2 color={side === 'YES' ? 'var(--success)' : 'var(--danger)'} size={24} />
+          <div>
+            <p style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>Bet Placed Successfully</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>-100 USDC on {side}</p>
+          </div>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>
-          Decentralized Prediction Market powered by Autonomous Agents on the Unicity Testnet v2.
-        </p>
+      ), { duration: 3000 });
+    }, 1200);
+  };
+
+  return (
+    <>
+      <Toaster position="bottom-right" toastOptions={{
+        style: { background: '#1e1e24', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }
+      }} />
+      
+      {/* Header */}
+      <header style={{ borderBottom: '1px solid var(--surface-border)', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Activity size={28} color="var(--primary-color)" />
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.5px' }}>
+              Oracle<span className="text-gradient">Arena</span>
+            </h1>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={16}/> Markets</a>
+            <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}><Cpu size={16}/> Agents</a>
+            {loggedIn ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-color)', padding: '6px 16px', borderRadius: '20px', border: '1px solid var(--surface-border)' }}>
+                <Wallet size={16} color="var(--primary-color)" />
+                <span style={{ fontWeight: '600', fontFamily: 'monospace', fontSize: '1.05rem' }}>{balance.toLocaleString()} USDC</span>
+              </div>
+            ) : (
+              <button className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem' }} onClick={() => document.getElementById('login-input')?.focus()}>
+                Connect Wallet
+              </button>
+            )}
+          </div>
+        </div>
       </header>
 
-      {!loggedIn ? (
-        <section className="glass-panel animate-fade-in stagger-1" style={{ maxWidth: '450px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <Wallet size={48} color="var(--text-muted)" style={{ marginBottom: '16px', opacity: 0.8 }} />
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Connect Your Identity</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Enter a nametag to simulate a wallet connection and start betting.</p>
-          </div>
-          
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <input 
-              type="text" 
-              className="input-field"
-              placeholder="Enter your nametag (e.g., alice-123)" 
-              value={nametag}
-              onChange={e => setNametag(e.target.value)}
-              autoFocus
-            />
-            <button type="submit" className="btn btn-primary" style={{ padding: '14px' }}>
-              Connect Identity <ChevronRight size={18} />
-            </button>
-          </form>
-          
-          <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-            <ShieldCheck size={14} />
-            <span>Secure mock login for hackathon demo</span>
-          </div>
-        </section>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }} className="animate-fade-in">
-            <h2 style={{ fontSize: '1.8rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              Welcome back, <span className="text-gradient">{nametag}</span>
-            </h2>
-            <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '6px 12px', borderRadius: '20px', color: 'var(--primary-color)', fontSize: '0.9rem', fontWeight: '600' }}>
-              Balance: 1,500 USDC
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px', minHeight: 'calc(100vh - 160px)' }}>
+        {!loggedIn ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            style={{ maxWidth: '500px', margin: '60px auto 0' }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <h2 style={{ fontSize: '3rem', fontWeight: '800', letterSpacing: '-1px', marginBottom: '16px', lineHeight: 1.1 }}>
+                The Future of <br/><span className="text-gradient">Prediction Markets</span>
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
+                Powered by Unicity Testnet v2. Bet alongside autonomous AI agents with provable execution and zero latency.
+              </p>
             </div>
-          </div>
 
-          <section className="glass-panel animate-fade-in stagger-1">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <TrendingUp size={20} color="var(--primary-color)" />
-                  <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>Featured Market</span>
+            <section className="glass-panel">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ background: 'rgba(139, 92, 246, 0.2)', padding: '10px', borderRadius: '10px' }}>
+                  <Wallet size={24} color="var(--primary-color)" />
                 </div>
-                <h3 style={{ fontSize: '1.4rem', marginBottom: '12px' }}>Will Ethereum (ETH) hit $4,000 by Friday?</h3>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Demo Login</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No real funds required for hackathon</p>
+                </div>
               </div>
-              <div style={{ background: 'var(--success-bg)', color: 'var(--success)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '700', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                ● LIVE
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '24px', borderTop: '1px solid var(--surface-border)', borderBottom: '1px solid var(--surface-border)', padding: '16px 0' }}>
-              <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '4px' }}>Total Pool Size</p>
-                <p style={{ fontSize: '1.2rem', fontWeight: '600' }}>$15,000.00</p>
-              </div>
-              <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '4px' }}>Current Odds (YES)</p>
-                <p style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--primary-color)' }}>68%</p>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <button className="btn btn-success" style={{ padding: '16px', fontSize: '1.1rem' }}>
-                Bet YES <span style={{ opacity: 0.7, fontSize: '0.9rem' }}>(Returns 1.47x)</span>
-              </button>
-              <button className="btn btn-danger" style={{ padding: '16px', fontSize: '1.1rem' }}>
-                Bet NO <span style={{ opacity: 0.7, fontSize: '0.9rem' }}>(Returns 2.1x)</span>
-              </button>
-            </div>
-          </section>
-
-          <section className="glass-panel animate-fade-in stagger-2">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <Cpu size={24} color="var(--primary-color)" />
-              <h3 style={{ fontSize: '1.3rem' }}>Oracle Agent Leaderboard</h3>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[
-                { name: 'oracle-agent-alpha', xp: 1500, acc: 98, active: true },
-                { name: 'oracle-agent-beta', xp: 1240, acc: 94, active: true },
-                { name: 'oracle-agent-gamma', xp: 890, acc: 88, active: false },
-              ].map((agent, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--surface-border)' }}>
-                      <span style={{ fontWeight: '700', color: 'var(--text-muted)' }}>#{i + 1}</span>
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <strong style={{ fontSize: '1.1rem' }}>{agent.name}</strong>
-                        {agent.active && <Zap size={14} color="#eab308" style={{ fill: '#eab308' }} />}
+              
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <input 
+                  id="login-input"
+                  type="text" 
+                  className="input-field"
+                  placeholder="Choose a cool nametag (e.g., degenspartan)" 
+                  value={nametag}
+                  onChange={e => setNametag(e.target.value)}
+                />
+                <button type="submit" className="btn btn-primary" style={{ padding: '16px', fontSize: '1.05rem' }}>
+                  Enter Arena <ChevronRight size={20} />
+                </button>
+              </form>
+            </section>
+          </motion.div>
+        ) : (
+          <div className="dashboard-grid">
+            {/* Left Column: Markets & Trading */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TrendingUp size={24} color="var(--primary-color)" /> Live Markets
+                </h2>
+                
+                {/* Market Selector */}
+                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px' }} className="custom-scrollbar">
+                  {markets.map(market => (
+                    <div 
+                      key={market.id}
+                      onClick={() => setActiveMarket(market)}
+                      className={`glass-panel market-card ${activeMarket.id === market.id ? 'active' : ''}`}
+                      style={{ padding: '16px', minWidth: '280px', flex: '0 0 auto' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                        <span>{market.category}</span>
+                        <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }}></span> LIVE
+                        </span>
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                        Accuracy: <span style={{ color: agent.acc > 90 ? 'var(--success)' : 'inherit' }}>{agent.acc}%</span>
+                      <h4 style={{ fontSize: '1rem', marginBottom: '12px', lineHeight: 1.3 }}>{market.title}</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--primary-color)' }}>{market.oddsYes}% <span style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>YES</span></span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>${market.pool.toLocaleString()} Pool</span>
                       </div>
                     </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--primary-color)' }}>{agent.xp}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>XP Earned</div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Trading Interface */}
+              <motion.section 
+                key={activeMarket.id}
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="glass-panel" 
+                style={{ position: 'relative', overflow: 'hidden' }}
+              >
+                {/* Background gradient blur */}
+                <div style={{ position: 'absolute', top: '-50%', right: '-20%', width: '300px', height: '300px', background: 'var(--accent-glow)', filter: 'blur(100px)', borderRadius: '50%', opacity: 0.5, pointerEvents: 'none' }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', position: 'relative' }}>
+                  <h3 style={{ fontSize: '1.8rem', maxWidth: '80%', lineHeight: 1.2 }}>{activeMarket.title}</h3>
+                  <div style={{ background: 'rgba(0,0,0,0.4)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--surface-border)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '2px' }}>Total Pool</div>
+                    <div style={{ fontWeight: '700', fontSize: '1.1rem', fontFamily: 'monospace' }}>${activeMarket.pool.toLocaleString()}</div>
                   </div>
                 </div>
-              ))}
+
+                {/* Probability Bar */}
+                <div style={{ marginBottom: '40px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontWeight: '600' }}>
+                    <span style={{ color: 'var(--success)' }}>YES ({activeMarket.oddsYes}%)</span>
+                    <span style={{ color: 'var(--danger)' }}>NO ({100 - activeMarket.oddsYes}%)</span>
+                  </div>
+                  <div style={{ height: '12px', background: 'var(--danger-bg)', borderRadius: '6px', overflow: 'hidden', display: 'flex' }}>
+                    <motion.div 
+                      animate={{ width: `${activeMarket.oddsYes}%` }} 
+                      transition={{ type: 'spring', bounce: 0, duration: 1 }}
+                      style={{ height: '100%', background: 'var(--success)' }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Trading Controls */}
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '24px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <span style={{ fontWeight: '600' }}>Place Prediction</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Cost: <span style={{color: 'white', fontWeight: 'bold'}}>100 USDC</span> / share</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <button 
+                      onClick={() => handleBet('YES')}
+                      disabled={isBetting !== null}
+                      className="btn btn-success" 
+                      style={{ padding: '20px', fontSize: '1.2rem', display: 'flex', flexDirection: 'column', gap: '4px' }}
+                    >
+                      {isBetting === 'YES' ? <span className="loader animate-spin" /> : 'Buy YES'}
+                      <span style={{ fontSize: '0.8rem', opacity: 0.8, fontWeight: 'normal' }}>Payout: {(100 / activeMarket.oddsYes).toFixed(2)}x</span>
+                    </button>
+                    <button 
+                      onClick={() => handleBet('NO')}
+                      disabled={isBetting !== null}
+                      className="btn btn-danger" 
+                      style={{ padding: '20px', fontSize: '1.2rem', display: 'flex', flexDirection: 'column', gap: '4px' }}
+                    >
+                      {isBetting === 'NO' ? <span className="loader animate-spin" /> : 'Buy NO'}
+                      <span style={{ fontSize: '0.8rem', opacity: 0.8, fontWeight: 'normal' }}>Payout: {(100 / (100 - activeMarket.oddsYes)).toFixed(2)}x</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.section>
             </div>
-          </section>
+
+            {/* Right Column: Agent Activity Feed */}
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+              <section className="glass-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--surface-border)' }}>
+                  <Cpu size={20} color="var(--primary-color)" />
+                  <h3 style={{ fontSize: '1.2rem' }}>Live Agent Feed</h3>
+                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--success)' }}>
+                    <span className="animate-spin" style={{ width: '8px', height: '8px', borderRadius: '50%', border: '2px solid transparent', borderTopColor: 'var(--success)', borderRightColor: 'var(--success)' }}></span>
+                    Syncing Unicity
+                  </div>
+                </div>
+
+                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', maxHeight: '500px', paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <AnimatePresence initial={false}>
+                    {agentLogs.length === 0 ? (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', fontSize: '0.9rem' }}>
+                        Waiting for agent activity...
+                      </div>
+                    ) : (
+                      agentLogs.map((log) => (
+                        <motion.div 
+                          key={log.id}
+                          initial={{ opacity: 0, x: 20, height: 0 }}
+                          animate={{ opacity: 1, x: 0, height: 'auto' }}
+                          className="agent-log-item"
+                          style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', borderLeft: `3px solid ${log.side === 'YES' ? 'var(--success)' : 'var(--danger)'}` }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '4px' }}><Zap size={12}/> {log.agent}</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{log.time.toLocaleTimeString()}</span>
+                          </div>
+                          <div style={{ fontSize: '0.9rem', lineHeight: 1.4 }}>
+                            Predicted <strong style={{ color: log.side === 'YES' ? 'var(--success)' : 'var(--danger)' }}>{log.side}</strong> with <strong>${log.amount}</strong>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              on: {MARKETS.find(m => m.id === log.marketId)?.title}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
+                    <div ref={logsEndRef} />
+                  </AnimatePresence>
+                </div>
+              </section>
+            </motion.div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer style={{ borderTop: '1px solid var(--surface-border)', padding: '40px 24px', marginTop: 'auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6 }}>
+            <Activity size={20} />
+            <span style={{ fontWeight: '600' }}>OracleArena</span>
+          </div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Built for Unicity Builder Program 2026. This is a Testnet demo.
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <a href="#" style={{ color: 'var(--text-muted)', transition: 'color 0.2s' }}><Github size={20} /></a>
+            <a href="#" style={{ color: 'var(--text-muted)', transition: 'color 0.2s' }}><MessageSquare size={20} /></a>
+          </div>
         </div>
-      )}
-    </div>
+      </footer>
+    </>
   );
 }
 
