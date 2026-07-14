@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present && node -e \"const fs = require('fs'); fs.cpSync('packages/web/dist', 'dist', { recursive: true });\"",
     "test": "npm run test --workspaces --if-present",
     "dev:web": "npm run dev --workspace=packages/web",
     "start:agent": "npm run start --workspace=packages/cli"

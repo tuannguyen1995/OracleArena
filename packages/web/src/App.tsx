@@ -28,6 +28,7 @@ interface AgentLog {
 }
 
 function App() {
+  console.log("===== APP IS RUNNING v3 =====");
   const [nametag, setNametag] = useState(() => localStorage.getItem('oracle_nametag') || '');
   const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem('oracle_loggedIn') === 'true');
   const [balance, setBalance] = useState(() => {
@@ -149,6 +150,9 @@ function App() {
 
   return (
     <>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', background: 'red', color: 'white', zIndex: 99999, padding: '20px', textAlign: 'center', fontSize: '24px', fontWeight: 'bold' }}>
+        IF YOU CAN READ THIS, VERCEL DEPLOYMENT IS WORKING!
+      </div>
       <Toaster position="bottom-right" toastOptions={{
         style: { background: '#1e1e24', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }
       }} />
